@@ -1,5 +1,3 @@
-import axios from "axios";
-
 const BUS_KEY = "864e2d2a-dddc-441a-89b8-6435d86b81e4";
 const STOP_ID = "502174";
 const BUS_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json";
@@ -37,8 +35,15 @@ export async function getBus() {
   }
 
   try {
-    const params = { key: BUS_KEY, MonitoringRef: STOP_ID, MaximumStopVisits: 8 };
-    const { data } = await axios.get(BUS_URL, { params, timeout: 10000 });
+    const url = new URL(BUS_URL);
+    url.searchParams.set("key", BUS_KEY);
+    url.searchParams.set("MonitoringRef", STOP_ID);
+    url.searchParams.set("MaximumStopVisits", "8");
+
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error(`Bus API failed: ${res.status}`);
+
+    const data = await res.json();
 
     const visits = data.Siri.ServiceDelivery.StopMonitoringDelivery[0]?.MonitoredStopVisit || [];
     const grouped = { "Q44-SBS": [], "Q20": [] };
