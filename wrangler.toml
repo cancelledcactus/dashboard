@@ -1,9 +1,7 @@
+
 name = "dashboard"
-type = "javascript"
+main = "functions/worker.js"
 account_id = "ccddcbf91b94e121d9d0d01d43d1675f"
-workers_dev = true
 compatibility_date = "2025-08-29"
 
-[site]
-bucket = "./templates"
-entry-point = "functions"
+
