@@ -1,17 +1,17 @@
 // functions/worker.js
-import * as weatherWrapper from "./weather.js";
-import * as busWrapper from "./bus.js";
+import { getWeather } from "../weather.js";
+import { getBus } from "../bus.js";
 
 // Serve static files from templates/
-async function serveStatic(path) {
+async function serveStatic(filePath) {
   try {
-    // Adjust path from functions/ to templates/
-    const res = await fetch(new URL(`../${path}`, import.meta.url));
+    // Use relative fetch from your Worker root
+    const res = await fetch(`https://your-worker-domain.com/${filePath}`);
     if (!res.ok) return new Response("Not Found", { status: 404 });
 
-    const contentType = path.endsWith(".css")
+    const contentType = filePath.endsWith(".css")
       ? "text/css"
-      : path.endsWith(".js")
+      : filePath.endsWith(".js")
       ? "application/javascript"
       : "text/html";
 
@@ -23,23 +23,34 @@ async function serveStatic(path) {
   }
 }
 
-// Main request handler
+addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event.request));
+});
+
 async function handleRequest(request) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
   // API routes
-  if (pathname === "/api/weather") return weatherWrapper.default.fetch(request);
-  if (pathname === "/api/bus") return busWrapper.default.fetch(request);
+  if (pathname === "/api/weather") {
+    const data = await getWeather();
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
-  // Serve static files
-  if (pathname.startsWith("/static/")) return serveStatic(`templates${pathname}`);
+  if (pathname === "/api/bus") {
+    const data = await getBus();
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
-  // Default: serve index.html
+  // Static files
+  if (pathname.startsWith("/static/")) {
+    return serveStatic(`templates${pathname}`);
+  }
+
+  // Default: index.html
   return serveStatic("templates/index.html");
 }
-
-// Register fetch event
-addEventListener("fetch", (event) => {
-  event.respondWith(handleRequest(event.request));
-});
