@@ -52,5 +52,5 @@ async function handleRequest(request) {
   }
 
   // Default: serve index.html
-  return serveStatic("index.html");
+  return serveStatic("/templates/index.html");
 }
