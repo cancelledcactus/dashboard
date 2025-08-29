@@ -67,7 +67,7 @@ tickClock();
 
 /* Weather fetch & render */
 async function loadWeather() {
-    const j = await r.json();
+    const j = await getWeather();
     if (!j) return;
     // current
     const cur = j.current || {};
@@ -98,7 +98,7 @@ async function loadWeather() {
 
 /* Bus fetch & render */
 async function loadBus() {
-    const j = await r.json();
+    const j = await getBus();
     const list = document.getElementById('bus-list');
     list.innerHTML = '';
 
