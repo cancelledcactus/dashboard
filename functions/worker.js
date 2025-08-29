@@ -1,8 +1,27 @@
 // functions/worker.js
-import { getWeather } from "../weather.js";
-import { getBus } from "../bus.js";
+import { getWeather } from "./weather.js";
+import { getBus } from "./bus.js";
 
-// Listen for all fetch events
+// Serve static files from templates/
+async function serveStatic(path) {
+  try {
+    const res = await fetch(new URL(`../templates/${path}`, import.meta.url));
+    if (!res.ok) return new Response("Not Found", { status: 404 });
+
+    const contentType = path.endsWith(".css")
+      ? "text/css"
+      : path.endsWith(".js")
+      ? "application/javascript"
+      : "text/html";
+
+    return new Response(await res.text(), {
+      headers: { "Content-Type": contentType },
+    });
+  } catch (err) {
+    return new Response("Error fetching file", { status: 500 });
+  }
+}
+
 addEventListener("fetch", (event) => {
   event.respondWith(handleRequest(event.request));
 });
@@ -13,33 +32,25 @@ async function handleRequest(request) {
 
   // API routes
   if (pathname === "/api/weather") {
-    try {
-      const data = await getWeather();
-      return new Response(JSON.stringify(data), {
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    const data = await getWeather();
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   if (pathname === "/api/bus") {
-    try {
-      const data = await getBus();
-      return new Response(JSON.stringify(data), {
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    const data = await getBus();
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  // Static files & index.html served by Worker Sites automatically
-  return fetch(request);
+  // Serve static files
+  if (pathname.startsWith("/static/")) {
+    const staticPath = pathname.replace("/static/", "static/");
+    return serveStatic(staticPath);
+  }
+
+  // Default: serve index.html
+  return serveStatic("index.html");
 }
