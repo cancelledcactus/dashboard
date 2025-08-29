@@ -13,7 +13,7 @@
     <!-- Left: big clock -->
     <div class="clock-section card">
       <div id="clock" class="clock">--:--</div>
-<div id="date" class="date">--</div>
+      <div id="date" class="date">--</div>
     </div>
 
     <!-- Top-right: Bus info -->
@@ -52,9 +52,7 @@
   </div>
 
 <script>
-import { getWeather } from '/functions/weather.js';
-import { getBus } from '/functions/bus.js';
-/* Clock tick (client-side, keeps it fresh) */
+/* Clock tick (client-side) */
 function tickClock() {
   const d = new Date();
   const time = d.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit', hour12: true});
@@ -65,22 +63,23 @@ function tickClock() {
 setInterval(tickClock, 1000);
 tickClock();
 
-/* Weather fetch & render */
+/* Fetch weather from Worker endpoint */
 async function loadWeather() {
-    const j = await getWeather();
+  try {
+    const res = await fetch("/api/weather");
+    const j = await res.json();
     if (!j) return;
-    // current
+
     const cur = j.current || {};
     document.getElementById('w-icon').src = cur.icon || '';
     document.getElementById('w-cond').textContent = cur.label || (cur.code ? `Code ${cur.code}` : 'Weather');
-    document.getElementById('w-temp').textContent = (cur.temp !== null && cur.temp !== undefined) ? `${Math.round(cur.temp)}°F` : '--°F';
-    document.getElementById('w-feels').textContent = (cur.feels_like !== null && cur.feels_like !== undefined) ? `Feels ${Math.round(cur.feels_like)}°F` : `Feels --°F`;
+    document.getElementById('w-temp').textContent = cur.temp != null ? `${Math.round(cur.temp)}°F` : '--°F';
+    document.getElementById('w-feels').textContent = cur.feels_like != null ? `Feels ${Math.round(cur.feels_like)}°F` : 'Feels --°F';
 
     document.getElementById('w-daily-avg').textContent = j.daily_avg ? `Avg: ${j.daily_avg}°F` : 'Avg: --';
     const sun = j.sun || {};
     document.getElementById('w-sun').textContent = `${sun.label || 'Sun'}: ${sun.time || '--'}`;
 
-    // hourly strip (6)
     const strip = document.getElementById('hourly-strip');
     strip.innerHTML = '';
     (j.hourly || []).forEach(h => {
@@ -89,20 +88,24 @@ async function loadWeather() {
       el.innerHTML = `
         <div class="hour-time">${h.time || '--'}</div>
         <img class="hour-icon" src="${h.icon || ''}" alt="">
-        <div class="hour-temp">${h.temp !== null && h.temp !== undefined ? Math.round(h.temp) + '°' : '--'}</div>
+        <div class="hour-temp">${h.temp != null ? Math.round(h.temp) + '°' : '--'}</div>
         <div class="hour-rain">🌧 ${h.rain ?? 0}%</div>
       `;
       strip.appendChild(el);
     });
+  } catch(err) {
+    console.error("Weather fetch error:", err);
+  }
 }
 
-/* Bus fetch & render */
+/* Fetch bus data from Worker endpoint */
 async function loadBus() {
-    const j = await getBus();
+  try {
+    const res = await fetch("/api/bus");
+    const j = await res.json();
     const list = document.getElementById('bus-list');
     list.innerHTML = '';
 
-        // 🔹 If the server says to hide it
     if (j.hidden) {
       document.getElementById('bus-updated').textContent = '';
       const msg = document.createElement('div');
@@ -118,45 +121,37 @@ async function loadBus() {
       list.innerHTML = `<div class="muted">Bus data unavailable</div>`;
       return;
     }
+
     document.getElementById('bus-updated').textContent = 'Data updated ' + (new Date()).toLocaleTimeString();
-    
-        // Render Q44-SBS
-    if (j.buses["Q44-SBS"] && j.buses["Q44-SBS"].length) {
-     const header = document.createElement('div');
-     header.className = 'bus-group-header';
-     header.textContent = 'Q44-SBS';
-     list.appendChild(header);
-      j.buses["Q44-SBS"].forEach(b => {
-        const li = document.createElement('div');
-        li.className = 'bus-item';
-        const minutes = (b.minutes === null || b.minutes === undefined) ? '?' : b.minutes;
-        li.innerHTML = `<div class="route">${b.line}</div>
-                        <div class="detail">🚌 ${minutes} min • ${b.dest}${b.extra || ''}</div>`;
-        list.appendChild(li);
-      });
+
+    for (const line of ['Q44-SBS','Q20']) {
+      if (j.buses[line] && j.buses[line].length) {
+        const header = document.createElement('div');
+        header.className = 'bus-group-header';
+        header.textContent = line;
+        list.appendChild(header);
+
+        j.buses[line].forEach(b => {
+          const li = document.createElement('div');
+          li.className = 'bus-item';
+          const minutes = b.minutes != null ? b.minutes : '?';
+          li.innerHTML = `<div class="route">${b.line}</div>
+                          <div class="detail">🚌 ${minutes} min • ${b.dest}${b.extra || ''}</div>`;
+          list.appendChild(li);
+        });
+      }
     }
 
-        // Render Q20
-    if (j.buses["Q20"] && j.buses["Q20"].length) {
-      const header = document.createElement('div');
-     header.className = 'bus-group-header';
-      header.textContent = 'Q20';
-      list.appendChild(header);
-      j.buses["Q20"].forEach(b => {
-        const li = document.createElement('div');
-        li.className = 'bus-item';
-        const minutes = (b.minutes === null || b.minutes === undefined) ? '?' : b.minutes;
-        li.innerHTML = `<div class="route">${b.line}</div>
-                        <div class="detail">🚌 ${minutes} min • ${b.dest}${b.extra || ''}</div>`;
-        list.appendChild(li);
-      });
-    }
+  } catch(err) {
+    console.error("Bus fetch error:", err);
+  }
 }
 
+// Initial load
 loadWeather();
 loadBus();
-setInterval(loadWeather, 5 * 60 * 1000); // weather every 5m
-setInterval(loadBus, 15 * 1000); // bus every 15s
+setInterval(loadWeather, 5 * 60 * 1000); // every 5 min
+setInterval(loadBus, 15 * 1000); // every 15 sec
 </script>
 </body>
 </html>
