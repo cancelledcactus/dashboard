@@ -1,16 +1,16 @@
-import weatherWrapper from "./weather.js";
-import busWrapper from "./bus.js";
+// functions/worker.js
+import { getWeather } from "./weather.js";
+import { getBus } from "./bus.js";
 
 // Serve static files from templates/
-async function serveStatic(filePath) {
+async function serveStatic(path) {
   try {
-    const url = new URL(`../templates/${filePath}`, import.meta.url);
-    const res = await fetch(url);
+    const res = await fetch(new URL(`../templates/${path}`, import.meta.url));
     if (!res.ok) return new Response("Not Found", { status: 404 });
 
-    const contentType = filePath.endsWith(".css")
+    const contentType = path.endsWith(".css")
       ? "text/css"
-      : filePath.endsWith(".js")
+      : path.endsWith(".js")
       ? "application/javascript"
       : "text/html";
 
@@ -31,8 +31,19 @@ async function handleRequest(request) {
   const pathname = url.pathname;
 
   // API routes
-  if (pathname === "/api/weather") return weatherWrapper.default.fetch(request);
-  if (pathname === "/api/bus") return busWrapper.default.fetch(request);
+  if (pathname === "/api/weather") {
+    const data = await getWeather();
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (pathname === "/api/bus") {
+    const data = await getBus();
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   // Serve static files
   if (pathname.startsWith("/static/")) {
