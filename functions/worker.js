@@ -1,16 +1,19 @@
-import { getWeather } from "./weather.js";
-import { getBus } from "./bus.js";
+// functions/worker.js
+import * as weatherWrapper from "./weather.js";
+import * as busWrapper from "./bus.js";
 
 // Serve your static files from templates/static
 async function serveStatic(path) {
   try {
-    const res = await fetch(`${new URL(path, import.meta.url)}`);
+    const res = await fetch(new URL(path, import.meta.url));
     if (!res.ok) return new Response("Not Found", { status: 404 });
+
     const contentType = path.endsWith(".css")
       ? "text/css"
       : path.endsWith(".js")
       ? "application/javascript"
       : "text/html";
+
     return new Response(await res.text(), {
       headers: { "Content-Type": contentType },
     });
@@ -29,17 +32,11 @@ async function handleRequest(request) {
 
   // API routes
   if (pathname === "/api/weather") {
-    const data = await getWeather();
-    return new Response(JSON.stringify(data), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return weatherWrapper.fetch(request);
   }
 
   if (pathname === "/api/bus") {
-    const data = await getBus();
-    return new Response(JSON.stringify(data), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return busWrapper.fetch(request);
   }
 
   // Serve static files
