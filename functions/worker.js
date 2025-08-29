@@ -1,5 +1,5 @@
-import { getWeather } from "./functions/weather.js";
-import { getBus } from "./functions/bus.js";
+import { getWeather } from "./weather.js";
+import { getBus } from "./bus.js";
 
 // Serve your static files from templates/static
 async function serveStatic(path) {
