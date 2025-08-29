@@ -12,8 +12,8 @@
   <div class="dashboard">
     <!-- Left: big clock -->
     <div class="clock-section card">
-      <div id="clock" class="clock">{{ clock }}</div>
-      <div id="date" class="date">{{ date }}</div>
+      <div id="clock" class="clock">--:--</div>
+<div id="date" class="date">--</div>
     </div>
 
     <!-- Top-right: Bus info -->
@@ -52,6 +52,8 @@
   </div>
 
 <script>
+import { getWeather } from '/functions/weather.js';
+import { getBus } from '/functions/bus.js';
 /* Clock tick (client-side, keeps it fresh) */
 function tickClock() {
   const d = new Date();
@@ -65,8 +67,6 @@ tickClock();
 
 /* Weather fetch & render */
 async function loadWeather() {
-  try {
-    const r = await fetch('/api/weather');
     const j = await r.json();
     if (!j) return;
     // current
@@ -94,15 +94,10 @@ async function loadWeather() {
       `;
       strip.appendChild(el);
     });
-  } catch (e) {
-    console.error('loadWeather error', e);
-  }
 }
 
 /* Bus fetch & render */
 async function loadBus() {
-  try {
-    const r = await fetch('/api/bus');
     const j = await r.json();
     const list = document.getElementById('bus-list');
     list.innerHTML = '';
@@ -156,9 +151,6 @@ async function loadBus() {
         list.appendChild(li);
       });
     }
-  } catch (e) {
-    console.error('loadBus error', e);
-  }
 }
 
 loadWeather();
