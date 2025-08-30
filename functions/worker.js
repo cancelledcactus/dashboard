@@ -38,18 +38,21 @@ async function handleRequest(request) {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
       "Cache-Control": "no-store",
+      },
     });
   }
 
   if (pathname === "/api/bus") {
-     const data = await getBus(); // should always return an object
+  const data = await getBus(); // should always return an object
   return new Response(JSON.stringify(data), {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
       "Cache-Control": "no-store"
-    });
-  }
+    },
+  });
+}
+
 
   // Serve static files
   if (pathname.startsWith("/static/")) {
