@@ -1,6 +1,9 @@
 // weather.js
 // Node >=18 or modern browsers for fetch support
 
+// Imports (Node <18 may need: npm install node-fetch)
+
+
 // config
 const LAT = 40.7675, LON = -73.8331;
 const WEATHER_KEY = "zvL4ldbzkbXzBB1eWHkOApQ6iKnhBSUj";
