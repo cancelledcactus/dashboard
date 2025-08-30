@@ -6,7 +6,7 @@
 
 // config
 const LAT = 40.7675, LON = -73.8331;
-const WEATHER_KEY = "zvL4ldbzkbXzBB1eWHkOApQ6iKnhBSUj";
+const WEATHER_KEY = "9fzOlKwfgtt3GRWgNLWEJw0S36skrL8X";
 const WEATHER_URL = "https://api.tomorrow.io/v4/weather/forecast";
 const LOCAL_TZ = "America/New_York";
 
