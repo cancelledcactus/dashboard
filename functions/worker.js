@@ -32,16 +32,22 @@ async function handleRequest(request) {
 
   // API routes
   if (pathname === "/api/weather") {
-    const data = await getWeather();
-    return new Response(JSON.stringify(data), {
-      headers: { "Content-Type": "application/json" },
+     const data = await getWeather(); // should always return an object
+  return new Response(JSON.stringify(data), {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store",
     });
   }
 
   if (pathname === "/api/bus") {
-    const data = await getBus();
-    return new Response(JSON.stringify(data), {
-      headers: { "Content-Type": "application/json" },
+     const data = await getBus(); // should always return an object
+  return new Response(JSON.stringify(data), {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store"
     });
   }
 
