@@ -1,202 +1,311 @@
+
 // weather.js
 // Node >=18 or modern browsers for fetch support
 
-// Config
+// Imports (Node <18 may need: npm install node-fetch)
+
+
+// config
 const LAT = 40.7675, LON = -73.8331;
-const WEATHER_KEY = "9fzOlKwfgtt3GRWgNLWEJw0S36skrL8X";
+const WEATHER_KEY = "zvL4ldbzkbXzBB1eWHkOApQ6iKnhBSUj";
 const WEATHER_URL = "https://api.tomorrow.io/v4/weather/forecast";
 const LOCAL_TZ = "America/New_York";
+
+// exact commit path you gave (V2 small PNG icons)
 const ICON_BASE = "https://raw.githubusercontent.com/Tomorrow-IO-API/tomorrow-weather-codes/51b9588fa598d7a8fcf26798854e0d74708abcc4/V2_icons/large/png/";
 
-// Only @2x icons
+// Prioritized suffixes
 const _SUFFIXES = [
-  "10000_clear_large@2x.png",
-  "10001_clear_large@2x.png",
-  "10010_cloudy_large@2x.png",
-  "11000_mostly_clear_large@2x.png",
-  "11001_mostly_clear_large@2x.png",
-  "11010_partly_cloudy_large@2x.png",
-  "11011_partly_cloudy_large@2x.png",
-  "11020_mostly_cloudy_large@2x.png",
-  "11021_mostly_cloudy_large@2x.png",
-  "11030_mostly_clear_large@2x.png",
-  "11031_mostly_clear_large@2x.png",
-  "20000_fog_large@2x.png",
-  "21000_fog_light_large@2x.png",
-  "21010_fog_light_mostly_clear_large@2x.png",
-  "21011_fog_light_mostly_clear_large@2x.png",
-  "21020_fog_light_partly_cloudy_large@2x.png",
-  "21021_fog_light_partly_cloudy_large@2x.png",
-  "21030_fog_light_mostly_cloudy_large@2x.png",
-  "21031_fog_light_mostly_cloudy_large@2x.png",
-  "21060_fog_mostly_clear_large@2x.png",
-  "21061_fog_mostly_clear_large@2x.png",
-  "21070_fog_partly_cloudy_large@2x.png",
-  "21071_fog_partly_cloudy_large@2x.png",
-  "21080_fog_mostly_cloudy_large@2x.png",
-  "21081_fog_mostly_cloudy_large@2x.png",
-  "40000_drizzle_large@2x.png",
-  "40010_rain_large@2x.png",
-  "42000_rain_light_large@2x.png",
-  "42010_rain_heavy_large@2x.png",
-  "42020_rain_heavy_partly_cloudy_large@2x.png",
-  "42021_rain_heavy_partly_cloudy_large@2x.png",
-  "42030_drizzle_mostly_clear_large@2x.png",
-  "42031_drizzle_mostly_clear_large@2x.png",
-  "42040_drizzle_partly_cloudy_large@2x.png",
-  "42041_drizzle_partly_cloudy_large@2x.png",
-  "42050_drizzle_mostly_cloudy_large@2x.png",
-  "42051_drizzle_mostly_cloudy_large@2x.png",
-  "42080_rain_partly_cloudy_large@2x.png",
-  "42081_rain_partly_cloudy_large@2x.png",
-  "42090_rain_mostly_clear_large@2x.png",
-  "42091_rain_mostly_clear_large@2x.png",
-  "42100_rain_mostly_cloudy_large@2x.png",
-  "42101_rain_mostly_cloudy_large@2x.png",
-  "42110_rain_heavy_mostly_clear_large@2x.png",
-  "42111_rain_heavy_mostly_clear_large@2x.png",
-  "42120_rain_heavy_mostly_cloudy_large@2x.png",
-  "42121_rain_heavy_mostly_cloudy_large@2x.png",
-  "42130_rain_light_mostly_clear_large@2x.png",
-  "42131_rain_light_mostly_clear_large@2x.png",
-  "42140_rain_light_partly_cloudy_large@2x.png",
-  "42141_rain_light_partly_cloudy_large@2x.png",
-  "42150_rain_light_mostly_cloudy_large@2x.png",
-  "42151_rain_light_mostly_cloudy_large@2x.png",
-  "50000_snow_large@2x.png",
-  "50010_flurries_large@2x.png",
-  "51000_snow_light_large@2x.png",
-  "51010_snow_heavy_large@2x.png",
-  "51020_snow_light_mostly_clear_large@2x.png",
-  "51021_snow_light_mostly_clear_large@2x.png",
-  "51030_snow_light_partly_cloudy_large@2x.png",
-  "51031_snow_light_partly_cloudy_large@2x.png",
-  "51040_snow_light_mostly_cloudy_large@2x.png",
-  "51041_snow_light_mostly_cloudy_large@2x.png",
-  "51050_snow_mostly_clear_large@2x.png",
-  "51051_snow_mostly_clear_large@2x.png",
-  "51060_snow_partly_cloudy_large@2x.png",
-  "51061_snow_partly_cloudy_large@2x.png",
-  "51070_snow_mostly_cloudy_large@2x.png",
-  "51071_snow_mostly_cloudy_large@2x.png",
-  "51080_wintry_mix_large@2x.png",
-  "51100_wintry_mix_large@2x.png",
-  "51120_wintry_mix_large@2x.png",
-  "51140_wintry_mix_large@2x.png",
-  "51150_flurries_mostly_clear_large@2x.png",
-  "51151_flurries_mostly_clear_large@2x.png",
-  "51160_flurries_partly_cloudy_large@2x.png",
-  "51161_flurries_partly_cloudy_large@2x.png",
-  "51170_flurries_mostly_cloudy_large@2x.png",
-  "51171_flurries_mostly_cloudy_large@2x.png",
-  "51190_snow_heavy_mostly_clear_large@2x.png",
-  "51191_snow_heavy_mostly_clear_large@2x.png",
-  "51200_snow_heavy_partly_cloudy_large@2x.png",
-  "51201_snow_heavy_partly_cloudy_large@2x.png",
-  "51210_snow_heavy_mostly_cloudy_large@2x.png",
-  "51211_snow_heavy_mostly_cloudy_large@2x.png",
-  "51220_wintry_mix_large@2x.png",
-  "60000_freezing_rain_drizzle_large@2x.png",
-  "60010_freezing_rain_large@2x.png",
-  "60020_freezing_rain_drizzle_partly_cloudy_large@2x.png",
-  "60021_freezing_rain_drizzle_partly_cloudy_large@2x.png",
-  "60030_freezing_rain_drizzle_mostly_clear_large@2x.png",
-  "60031_freezing_rain_drizzle_mostly_clear_large@2x.png",
-  "60040_freezing_rain_drizzle_mostly_cloudy_large@2x.png",
-  "60041_freezing_rain_drizzle_mostly_cloudy_large@2x.png",
-  "62000_freezing_rain_light_large@2x.png",
-  "62010_freezing_rain_heavy_large@2x.png",
-  "62020_freezing_rain_heavy_partly_cloudy_large@2x.png",
-  "62021_freezing_rain_heavy_partly_cloudy_large@2x.png",
-  "62030_freezing_rain_light_partly_cloudy_large@2x.png",
-  "62031_freezing_rain_light_partly_cloudy_large@2x.png",
-  "62040_wintry_mix_large@2x.png",
-  "62050_freezing_rain_light_mostly_clear_large@2x.png",
-  "62051_freezing_rain_light_mostly_clear_large@2x.png",
-  "62060_wintry_mix_large@2x.png",
-  "62070_freezing_rain_heavy_mostly_clear_large@2x.png",
-  "62071_freezing_rain_heavy_mostly_clear_large@2x.png",
-  "62080_freezing_rain_heavy_mostly_cloudy_large@2x.png",
-  "62081_freezing_rain_heavy_mostly_cloudy_large@2x.png",
-  "62090_freezing_rain_light_mostly_cloudy_large@2x.png",
-  "62091_freezing_rain_light_mostly_cloudy_large@2x.png",
-  "62120_wintry_mix_large@2x.png",
-  "62130_freezing_rain_mostly_clear_large@2x.png",
-  "62131_freezing_rain_mostly_clear_large@2x.png",
-  "62140_freezing_rain_partly_cloudy_large@2x.png",
-  "62141_freezing_rain_partly_cloudy_large@2x.png",
-  "62150_freezing_rain_mostly_cloudy_large@2x.png",
-  "62151_freezing_rain_mostly_cloudy_large@2x.png",
-  "62200_wintry_mix_large@2x.png",
-  "62220_wintry_mix_large@2x.png",
-  "70000_ice_pellets_large@2x.png",
-  "71010_ice_pellets_heavy_large@2x.png",
-  "71020_ice_pellets_light_large@2x.png",
-  "71030_wintry_mix_large@2x.png",
-  "71050_wintry_mix_large@2x.png",
-  "71060_wintry_mix_large@2x.png",
-  "71070_ice_pellets_partly_cloudy_large@2x.png",
-  "71071_ice_pellets_partly_cloudy_large@2x.png",
-  "71080_ice_pellets_mostly_clear_large@2x.png",
-  "71081_ice_pellets_mostly_clear_large@2x.png",
-  "71090_ice_pellets_mostly_cloudy_large@2x.png",
-  "71091_ice_pellets_mostly_cloudy_large@2x.png",
-  "71100_ice_pellets_light_mostly_clear_large@2x.png",
-  "71101_ice_pellets_light_mostly_clear_large@2x.png",
-  "71110_ice_pellets_light_partly_cloudy_large@2x.png",
-  "71111_ice_pellets_light_partly_cloudy_large@2x.png",
-  "71120_ice_pellets_light_mostly_cloudy_large@2x.png",
-  "71121_ice_pellets_light_mostly_cloudy_large@2x.png",
-  "71130_ice_pellets_heavy_mostly_clear_large@2x.png",
-  "71131_ice_pellets_heavy_mostly_clear_large@2x.png",
-  "71140_ice_pellets_heavy_partly_cloudy_large@2x.png",
-  "71141_ice_pellets_heavy_partly_cloudy_large@2x.png",
-  "71150_wintry_mix_large@2x.png",
-  "71160_ice_pellets_heavy_mostly_cloudy_large@2x.png",
-  "71161_ice_pellets_heavy_mostly_cloudy_large@2x.png",
-  "71170_wintry_mix_large@2x.png",
-  "80000_tstorm_large@2x.png",
-  "80010_tstorm_mostly_clear_large@2x.png",
-  "80011_tstorm_mostly_clear_large@2x.png",
-  "80020_tstorm_mostly_cloudy_large@2x.png",
-  "80021_tstorm_mostly_cloudy_large@2x.png",
-  "80030_tstorm_partly_cloudy_large@2x.png",
-  "80031_tstorm_partly_cloudy_large@2x.png"
+  "clear_large@2x.png",
+  "cloudy_large@2x.png",
+  "mostly_clear_large@2x.png",
+  "partly_cloudy_large@2x.png",
+  "mostly_cloudy_large@2x.png",
+  "fog_large@2x.png",
+  "fog_light_large@2x.png",
+  "fog_light_mostly_clear_large@2x.png",
+  "fog_light_partly_cloudy_large@2x.png",
+  "fog_light_mostly_cloudy_large@2x.png",
+  "fog_mostly_clear_large@2x.png",
+  "fog_partly_cloudy_large@2x.png",
+  "fog_mostly_cloudy_large@2x.png",
+  "drizzle_large@2x.png",
+  "rain_large@2x.png",
+  "rain_light_large@2x.png",
+  "rain_heavy_large@2x.png",
+  "rain_heavy_partly_cloudy_large@2x.png",
+  "drizzle_mostly_clear_large@2x.png",
+  "drizzle_partly_cloudy_large@2x.png",
+  "drizzle_mostly_cloudy_large@2x.png",
+  "rain_partly_cloudy_large@2x.png",
+  "rain_mostly_clear_large@2x.png",
+  "rain_mostly_cloudy_large@2x.png",
+  "rain_heavy_mostly_clear_large@2x.png",
+  "rain_heavy_mostly_cloudy_large@2x.png",
+  "rain_light_mostly_clear_large@2x.png",
+  "rain_light_partly_cloudy_large@2x.png",
+  "rain_light_mostly_cloudy_large@2x.png",
+  "snow_large@2x.png",
+  "flurries_large@2x.png",
+  "snow_light_large@2x.png",
+  "snow_heavy_large@2x.png",
+  "snow_light_mostly_clear_large@2x.png",
+  "snow_light_partly_cloudy_large@2x.png",
+  "snow_light_mostly_cloudy_large@2x.png",
+  "snow_mostly_clear_large@2x.png",
+  "snow_partly_cloudy_large@2x.png",
+  "snow_mostly_cloudy_large@2x.png",
+  "wintry_mix_large@2x.png",
+  "flurries_mostly_clear_large@2x.png",
+  "flurries_partly_cloudy_large@2x.png",
+  "flurries_mostly_cloudy_large@2x.png",
+  "snow_heavy_mostly_clear_large@2x.png",
+  "snow_heavy_partly_cloudy_large@2x.png",
+  "snow_heavy_mostly_cloudy_large@2x.png",
+  "freezing_rain_drizzle_large@2x.png",
+  "freezing_rain_large@2x.png",
+  "freezing_rain_drizzle_partly_cloudy_large@2x.png",
+  "freezing_rain_drizzle_mostly_clear_large@2x.png",
+  "freezing_rain_drizzle_mostly_cloudy_large@2x.png",
+  "freezing_rain_light_large@2x.png",
+  "freezing_rain_heavy_large@2x.png",
+  "freezing_rain_heavy_partly_cloudy_large@2x.png",
+  "freezing_rain_light_partly_cloudy_large@2x.png",
+  "freezing_rain_light_mostly_clear_large@2x.png",
+  "freezing_rain_heavy_mostly_clear_large@2x.png",
+  "freezing_rain_heavy_mostly_cloudy_large@2x.png",
+  "freezing_rain_light_mostly_cloudy_large@2x.png",
+  "ice_pellets_large@2x.png",
+  "ice_pellets_heavy_large@2x.png",
+  "ice_pellets_light_large@2x.png",
+  "ice_pellets_partly_cloudy_large@2x.png",
+  "ice_pellets_mostly_clear_large@2x.png",
+  "ice_pellets_mostly_cloudy_large@2x.png",
+  "ice_pellets_light_mostly_clear_large@2x.png",
+  "ice_pellets_light_partly_cloudy_large@2x.png",
+  "ice_pellets_light_mostly_cloudy_large@2x.png",
+  "ice_pellets_heavy_mostly_clear_large@2x.png",
+  "ice_pellets_heavy_partly_cloudy_large@2x.png",
+  "ice_pellets_heavy_mostly_cloudy_large@2x.png",
+  "tstorm_large@2x.png",
+  "tstorm_mostly_clear_large@2x.png",
+  "tstorm_mostly_cloudy_large@2x.png",
+  "tstorm_partly_cloudy_large@2x.png",
+  "unknown_large.png"
 ];
 
-// Keep your old day/night logic here
-function isDay(currentTime) {
-  const hour = currentTime.getHours();
-  return hour >= 6 && hour < 19; // 6AM-7PM = day
-}
+// cache to avoid repeated checks
+const _icon_cache = new Map();
 
-// Build full icon URL using your day/night logic
-function getIconUrlForCode(code, currentTime = new Date()) {
-  let codeStr = String(code);
-  
-  if (!isDay(currentTime)) {
-    codeStr += "_night"; // apply night suffix if your logic needs it
+// convert code to label
+function codeToLabel(code) {
+  if (code === null || code === undefined) return "Unknown";
+  let fname;
+  if (_icon_cache.has(`${code}_true`)) {
+    fname = _icon_cache.get(`${code}_true`).split("/").pop();
+  } else if (_icon_cache.has(`${code}_false`)) {
+    fname = _icon_cache.get(`${code}_false`).split("/").pop();
+  } else if (_icon_cache.has(code)) {
+    fname = _icon_cache.get(code).split("/").pop();
+  } else {
+    return `Code ${code}`;
   }
-
-  const match = _SUFFIXES.find(suffix => suffix.startsWith(codeStr));
-  return match ? ICON_BASE + match : ICON_BASE + "10000_clear_large@2x.png"; // fallback
+  let suffix = fname.split("_").slice(1).join("_");
+  return suffix.replace("_large@2x.png", "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
-// Fetch weather from Tomorrow.io
-export async function getWeather() {
-  const url = `${WEATHER_URL}?location=${LAT},${LON}&timesteps=1d&units=imperial&apikey=${WEATHER_KEY}&fields=weatherCode`;
-  
+// check if URL exists
+async function tryUrl(url, timeout = 4000) {
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-    const code = data?.data?.timelines?.[0]?.intervals?.[0]?.values?.weatherCode;
-    const icon = getIconUrlForCode(code);
-    return { code, icon };
-  } catch (err) {
-    console.error("Weather fetch error:", err);
-    return { code: null, icon: getIconUrlForCode(10000) };
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(id);
+    return res.ok;
+  } catch (e) {
+    return false;
   }
 }
 
-// Example usage (for testing, can remove in production)
-getWeather().then(w => console.log(w));
+// get icon url for weather code
+async function getIconUrlForCode(code, isNight = false, isDay = false) {
+  if (code === null || code === undefined) return ICON_BASE + "10001_clear_large@2x.png";
+
+  const cacheKey = `${code}_${isNight}`;
+  if (_icon_cache.has(cacheKey)) return _icon_cache.get(cacheKey);
+
+  let codeStr = String(code);
+  let candidates = [];
+
+  
+  if (codeStr.length === 4) {
+    const baseNight = `${codeStr}1`;
+    const baseDay = `${codeStr}0`;
+
+    if (isNight) {
+      candidates = [baseNight, baseDay];
+    } else if (isDay) {
+      candidates = [baseDay, baseNight];
+    } else {
+      // fallback if neither is explicitly set
+      candidates = [baseDay, baseNight];
+    }
+  } else {
+    candidates = [codeStr];
+  }
+
+  for (const base of candidates) {
+    for (const suffix of _SUFFIXES) {
+      const url = ICON_BASE + `${base}_${suffix}`;
+      if (await tryUrl(url)) {
+        _icon_cache.set(cacheKey, url);
+        return url;
+      }
+    }
+    for (const alt of [`${base}.png`, `${base}_large@2x.png`]) {
+      const url = ICON_BASE + alt;
+      if (await tryUrl(url)) {
+        _icon_cache.set(cacheKey, url);
+        return url;
+      }
+    }
+  }
+
+  const fallback = ICON_BASE + "10001_clear_large@2x.png";
+  _icon_cache.set(cacheKey, fallback);
+  return fallback;
+}
+
+// convert ISO to local datetime
+function isoToLocal(dtIso) {
+  if (!dtIso) return null;
+  try {
+    const dt = new Date(dtIso);
+    return dt.toLocaleString("en-US", { timeZone: LOCAL_TZ });
+  } catch {
+    return null;
+  }
+}
+
+// main getWeather function
+export async function getWeather() {
+  try {
+    const params = new URLSearchParams({
+      apikey: WEATHER_KEY,
+      location: `${LAT},${LON}`,
+      units: "imperial"
+    });
+
+    const r = await fetch(`${WEATHER_URL}?${params.toString()}`, { timeout: 12000 });
+    const data = await r.json();
+
+    const timelines = data.timelines || {};
+    const hourlyRaw = (timelines.hourly || []).slice(0, 14);
+    const dailyRaw = timelines.daily || [];
+
+    let iconSunrise = null, iconSunset = null;
+    if (dailyRaw.length) {
+      const todayVals = dailyRaw[0].values || {};
+      iconSunrise = isoToLocal(todayVals.sunriseTime);
+      iconSunset = isoToLocal(todayVals.sunsetTime);
+    }
+
+    const hourly = [];
+    for (const h of hourlyRaw) {
+      const tkey = h.startTime || h.time;
+      const vals = h.values || {};
+      const code = vals.weatherCode;
+      const temp = vals.temperature;
+      const feels = vals.temperatureApparent;
+      const rain = vals.precipitationProbability || 0;
+
+      // Parse local time for this hourly entry
+      const localTime = isoToLocal(tkey);
+      const localDate = localTime ? new Date(localTime) : null;
+      const timeStr = localDate ? localDate.toLocaleString("en-US", { hour: 'numeric', hour12: true }) : "";
+
+      let isNight = false;
+      let isDay = false;
+
+      if (localDate) {
+        // find which daily forecast matches this hour
+        const matchingDay = dailyRaw.find(d => {
+          const dDate = new Date(isoToLocal(d.time));
+          return (
+            dDate.getDate() === localDate.getDate() &&
+            dDate.getMonth() === localDate.getMonth() &&
+            dDate.getFullYear() === localDate.getFullYear()
+          );
+        });
+
+        if (matchingDay) {
+          const dayVals = matchingDay.values || {};
+          const sunrise = new Date(isoToLocal(dayVals.sunriseTime));
+          const sunset = new Date(isoToLocal(dayVals.sunsetTime));
+
+          if (localDate >= sunset || localDate < sunrise) {
+            isNight = true;
+          } else {
+            isDay = true;
+          }
+        }
+      }
+
+      
+      const iconUrl = await getIconUrlForCode(code, isNight, isDay);
+
+      hourly.push({ time: timeStr, temp, feels_like: feels, rain, code, icon: iconUrl });
+    }
+
+    let dailyAvg = null;
+    if (dailyRaw.length) {
+      const todayVals = dailyRaw[0].values || {};
+      if (todayVals.temperatureAvg != null) dailyAvg = todayVals.temperatureAvg;
+      else if (todayVals.temperatureMin != null && todayVals.temperatureMax != null) dailyAvg = (todayVals.temperatureMin + todayVals.temperatureMax) / 2;
+    }
+
+    // Sunrise/sunset via sunrise-sunset.org
+    let labelSunrise = null, labelSunset = null;
+    try {
+      const sunResp = await fetch(`https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`).then(r => r.json());
+      labelSunrise = isoToLocal(sunResp.results.sunrise);
+      labelSunset = isoToLocal(sunResp.results.sunset);
+    } catch {}
+
+    const now = new Date();
+    let sunLabel = "Sun", sunTime = "N/A";
+    if (labelSunrise && labelSunset) {
+      const nowMs = now.getTime();
+      if (new Date(labelSunrise).getTime() <= nowMs && nowMs <= new Date(labelSunset).getTime()) {
+        sunLabel = "Sunset";
+        sunTime = new Date(labelSunset).toLocaleString("en-US", { hour: 'numeric', minute: '2-digit', hour12: true });
+      } else {
+        sunLabel = "Sunrise";
+        sunTime = new Date(labelSunrise).toLocaleString("en-US", { hour: 'numeric', minute: '2-digit', hour12: true });
+      }
+    }
+
+    let current;
+    if (hourly.length) {
+      const cur = hourly[0];
+      current = {
+        temp: cur.temp,
+        feels_like: cur.feels_like,
+        rain: cur.rain,
+        icon: cur.icon,
+        code: cur.code,
+        label: codeToLabel(cur.code)
+      };
+    } else {
+      const defaultIcon = await getIconUrlForCode(1000, false);
+      current = { temp: null, feels_like: null, rain: 0, icon: defaultIcon, code: 1000, label: codeToLabel(1000) };
+    }
+
+    return { current, hourly, daily_avg: dailyAvg != null ? Math.round(dailyAvg * 10) / 10 : null, sun: { label: sunLabel, time: sunTime } };
+
+  } catch (exc) {
+    console.error("weather.getWeather error:", exc);
+    const fallbackIcon = await getIconUrlForCode(1000, false);
+    return { current: { temp: null, feels_like: null, rain: 0, icon: fallbackIcon, code: 1000 }, hourly: [], daily_avg: null, sun: { label: "Sun", time: "N/A" } };
+  }
+}
