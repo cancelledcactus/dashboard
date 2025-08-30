@@ -166,7 +166,6 @@ const _SUFFIXES = [
 
 // Keep your old day/night logic here
 function isDay(currentTime) {
-  // currentTime is expected as a JS Date object
   const hour = currentTime.getHours();
   return hour >= 6 && hour < 19; // 6AM-7PM = day
 }
@@ -184,7 +183,7 @@ function getIconUrlForCode(code, currentTime = new Date()) {
 }
 
 // Fetch weather from Tomorrow.io
-async function fetchWeather() {
+export async function getWeather() {
   const url = `${WEATHER_URL}?location=${LAT},${LON}&timesteps=1d&units=imperial&apikey=${WEATHER_KEY}&fields=weatherCode`;
   
   try {
@@ -199,5 +198,5 @@ async function fetchWeather() {
   }
 }
 
-// Example usage
-fetchWeather().then(w => console.log(w));
+// Example usage (for testing, can remove in production)
+getWeather().then(w => console.log(w));
