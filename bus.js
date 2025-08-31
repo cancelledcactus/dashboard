@@ -2,17 +2,22 @@ const BUS_KEY = "864e2d2a-dddc-441a-89b8-6435d86b81e4";
 const STOP_ID = "502174";
 const BUS_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json";
 
-const SHOW_START = 6;   // 6 AM ET
-const SHOW_END = 17;    // 5 PM ET
+const SHOW_START = 6;   // 6 AM UTC
+const SHOW_END = 17;    // 5 PM UTC
 
-// --- Helper: now in ET (for formatting only) ---
-function nowET() {
-  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+// --- Format helper: show any Date in Eastern Time ---
+function formatET(date, withSeconds = false) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour: "numeric",
+    minute: "2-digit",
+    second: withSeconds ? "2-digit" : undefined
+  }).format(date);
 }
 
-// Only controls visibility window
+// Only controls visibility window (UTC hours)
 function shouldShowBus() {
-  const h = nowET().getHours();
+  const h = new Date().getHours(); // UTC inside Workers
   if (SHOW_START < SHOW_END) {
     return h >= SHOW_START && h < SHOW_END;
   } else {
@@ -20,17 +25,17 @@ function shouldShowBus() {
   }
 }
 
-// Format the "scheduled for" time in ET
+// Format the "scheduled for" time (UTC → ET)
 function scheduledTimeStr() {
-  const d = nowET(); // current ET date
-  // Don’t mutate UTC hours; instead, build a fresh Date in ET and format it
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
-    minute: "2-digit"
-  }).format(new Date(d.getFullYear(), d.getMonth(), d.getDate(), SHOW_START, 0, 0));
+  const now = new Date();
+  const utcDate = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    SHOW_START, 0, 0
+  ));
+  return formatET(utcDate);
 }
-
 
 export async function getBus() {
   if (!shouldShowBus()) {
@@ -54,7 +59,7 @@ export async function getBus() {
 
     const visits = data.Siri.ServiceDelivery.StopMonitoringDelivery[0]?.MonitoredStopVisit || [];
     const grouped = { "Q44-SBS": [], "Q20": [] };
-    const now = new Date(); // keep UTC here for difference math
+    const now = new Date(); // keep UTC here for math
 
     visits.forEach(visit => {
       const journey = visit.MonitoredVehicleJourney || {};
@@ -65,7 +70,7 @@ export async function getBus() {
       const expected = call.ExpectedArrivalTime;
       let minutes = null;
       if (expected) {
-        const expDt = new Date(expected); // already ET in API response
+        const expDt = new Date(expected); // already ET from MTA
         minutes = Math.round((expDt - now) / 60000);
       }
 
@@ -87,17 +92,13 @@ export async function getBus() {
       }
     });
 
+    // Limit to 3 arrivals per line
     for (const key in grouped) {
       grouped[key] = grouped[key].slice(0, 3);
     }
 
-    // Show update time in ET
-    const updated = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/New_York",
-      hour: "numeric",
-      minute: "2-digit",
-      second: "2-digit"
-    }).format(nowET());
+    // Updated timestamp (always ET)
+    const updated = formatET(new Date(), true);
 
     return { buses: grouped, updated, hidden: false, scheduled_for: null };
 
