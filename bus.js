@@ -35,15 +35,25 @@ export async function getBus() {
   }
 
   try {
-    const url = new URL(BUS_URL);
-    url.searchParams.set("key", BUS_KEY);
-    url.searchParams.set("MonitoringRef", STOP_ID);
-    url.searchParams.set("MaximumStopVisits", "8");
+    // build query string
+    const params = new URLSearchParams({
+      key: BUS_KEY,
+      MonitoringRef: STOP_ID,
+      MaximumStopVisits: "8"
+    });
 
-    const res = await fetch(url.toString());
-    if (!res.ok) throw new Error(`Bus API failed: ${res.status}`);
+    // fetch with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    const data = await res.json();
+    const resp = await fetch(`${BUS_URL}?${params.toString()}`, {
+      method: "GET",
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
 
     const visits = data.Siri.ServiceDelivery.StopMonitoringDelivery[0]?.MonitoredStopVisit || [];
     const grouped = { "Q44-SBS": [], "Q20": [] };
@@ -84,7 +94,11 @@ export async function getBus() {
       grouped[key] = grouped[key].slice(0, 3);
     }
 
-    const updated = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+    const updated = new Date().toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit"
+    });
     return { buses: grouped, updated, hidden: false, scheduled_for: null };
 
   } catch (e) {
