@@ -22,13 +22,15 @@ function shouldShowBus() {
 
 // Format the "scheduled for" time in ET
 function scheduledTimeStr() {
-  const d = nowET();
+  const d = nowET(); // current ET date
+  // Don’t mutate UTC hours; instead, build a fresh Date in ET and format it
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     hour: "numeric",
     minute: "2-digit"
   }).format(new Date(d.getFullYear(), d.getMonth(), d.getDate(), SHOW_START, 0, 0));
 }
+
 
 export async function getBus() {
   if (!shouldShowBus()) {
