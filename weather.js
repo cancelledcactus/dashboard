@@ -195,7 +195,7 @@ function codeToLabel(code) {
 
 // get icon url for weather code
 async function getIconUrlForCode(code, isNight = false, isDay = false) {
-  if (code === null || code === undefined) return ICON_BASE + "10000_clear_large@2x.png";
+  if (code === null || code === undefined) return ICON_BASE + "71090_ice_pellets_mostly_cloudy_large@2x.png";
 
   const cacheKey = `${code}_${isNight}`;
   if (_icon_cache.has(cacheKey)) return _icon_cache.get(cacheKey);
@@ -229,7 +229,7 @@ async function getIconUrlForCode(code, isNight = false, isDay = false) {
   }
 
   // fallback default
-  const fallback = ICON_BASE + "10000_clear_large@2x.png";
+  const fallback = ICON_BASE + "71090_ice_pellets_mostly_cloudy_large@2x.png";
   _icon_cache.set(cacheKey, fallback);
   return fallback;
 }
