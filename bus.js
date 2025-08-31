@@ -3,33 +3,31 @@ const STOP_ID = "502174";
 const BUS_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json";
 
 const SHOW_START = 6;   // 6 AM ET
-const SHOW_END = 23;    // 5 PM ET
+const SHOW_END = 17;    // 5 PM ET
 
-// --- Helper: get Date in ET ---
+// --- Helper: now in ET (for formatting only) ---
 function nowET() {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
 }
 
+// Only controls visibility window
 function shouldShowBus() {
   const h = nowET().getHours();
-
   if (SHOW_START < SHOW_END) {
-    // Normal same-day range
     return h >= SHOW_START && h < SHOW_END;
   } else {
-    // Overnight range (e.g., 19 to 1)
     return h >= SHOW_START || h < SHOW_END;
   }
 }
 
+// Format the "scheduled for" time in ET
 function scheduledTimeStr() {
   const d = nowET();
-  d.setHours(SHOW_START, 0, 0, 0);
-  return d.toLocaleTimeString("en-US", {
+  return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     hour: "numeric",
     minute: "2-digit"
-  });
+  }).format(new Date(d.getFullYear(), d.getMonth(), d.getDate(), SHOW_START, 0, 0));
 }
 
 export async function getBus() {
@@ -54,7 +52,7 @@ export async function getBus() {
 
     const visits = data.Siri.ServiceDelivery.StopMonitoringDelivery[0]?.MonitoredStopVisit || [];
     const grouped = { "Q44-SBS": [], "Q20": [] };
-    const now = nowET();
+    const now = new Date(); // keep UTC here for difference math
 
     visits.forEach(visit => {
       const journey = visit.MonitoredVehicleJourney || {};
@@ -65,8 +63,7 @@ export async function getBus() {
       const expected = call.ExpectedArrivalTime;
       let minutes = null;
       if (expected) {
-        const expDt = new Date(expected);
-        // difference still works since JS Date handles ISO UTC → ms
+        const expDt = new Date(expected); // already ET in API response
         minutes = Math.round((expDt - now) / 60000);
       }
 
@@ -88,17 +85,17 @@ export async function getBus() {
       }
     });
 
-    // Limit to 3 arrivals per line
     for (const key in grouped) {
       grouped[key] = grouped[key].slice(0, 3);
     }
 
-    const updated = now.toLocaleTimeString("en-US", {
+    // Show update time in ET
+    const updated = new Intl.DateTimeFormat("en-US", {
       timeZone: "America/New_York",
       hour: "numeric",
       minute: "2-digit",
       second: "2-digit"
-    });
+    }).format(nowET());
 
     return { buses: grouped, updated, hidden: false, scheduled_for: null };
 
