@@ -2,39 +2,26 @@ const BUS_KEY = "864e2d2a-dddc-441a-89b8-6435d86b81e4";
 const STOP_ID = "502174";
 const BUS_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json";
 
-const SHOW_START = 10;   // 6 AM UTC
-const SHOW_END = 21;    // 5 PM UTC
+const SHOW_START = 6;   // 6 AM
+const SHOW_END = 17;    // 1 PM (adjust if needed)
 
-// --- Format helper: show any Date in Eastern Time ---
-function formatET(date, withSeconds = false) {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
-    minute: "2-digit",
-    second: withSeconds ? "2-digit" : undefined
-  }).format(date);
-}
-
-// Only controls visibility window (UTC hours)
 function shouldShowBus() {
-  const h = new Date().getHours(); // UTC inside Workers
+  const now = new Date();
+  const h = now.getHours();
+
   if (SHOW_START < SHOW_END) {
+    // Normal same-day range
     return h >= SHOW_START && h < SHOW_END;
   } else {
+    // Overnight range (e.g., 19 to 1)
     return h >= SHOW_START || h < SHOW_END;
   }
 }
 
-// Format the "scheduled for" time (UTC → ET)
 function scheduledTimeStr() {
-  const now = new Date();
-  const utcDate = new Date(Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    SHOW_START, 0, 0
-  ));
-  return formatET(utcDate);
+  const date = new Date();
+  date.setHours(SHOW_START, 0, 0);
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 export async function getBus() {
@@ -48,18 +35,29 @@ export async function getBus() {
   }
 
   try {
-    const url = new URL(BUS_URL);
-    url.searchParams.set("key", BUS_KEY);
-    url.searchParams.set("MonitoringRef", STOP_ID);
-    url.searchParams.set("MaximumStopVisits", "8");
+    // build query string
+    const params = new URLSearchParams({
+      key: BUS_KEY,
+      MonitoringRef: STOP_ID,
+      MaximumStopVisits: "8"
+    });
 
-    const res = await fetch(url.toString(), { cf: { cacheTtl: 0 } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    // fetch with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const resp = await fetch(`${BUS_URL}?${params.toString()}`, {
+      method: "GET",
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
 
     const visits = data.Siri.ServiceDelivery.StopMonitoringDelivery[0]?.MonitoredStopVisit || [];
     const grouped = { "Q44-SBS": [], "Q20": [] };
-    const now = new Date(); // keep UTC here for math
+    const nowUtc = new Date();
 
     visits.forEach(visit => {
       const journey = visit.MonitoredVehicleJourney || {};
@@ -70,8 +68,8 @@ export async function getBus() {
       const expected = call.ExpectedArrivalTime;
       let minutes = null;
       if (expected) {
-        const expDt = new Date(expected); // already ET from MTA
-        minutes = Math.round((expDt - now) / 60000);
+        const expDt = new Date(expected);
+        minutes = Math.round((expDt - nowUtc) / 60000);
       }
 
       if (grouped[line]) {
@@ -92,14 +90,15 @@ export async function getBus() {
       }
     });
 
-    // Limit to 3 arrivals per line
     for (const key in grouped) {
       grouped[key] = grouped[key].slice(0, 3);
     }
 
-    // Updated timestamp (always ET)
-    const updated = formatET(new Date(), true);
-
+    const updated = new Date().toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit"
+    });
     return { buses: grouped, updated, hidden: false, scheduled_for: null };
 
   } catch (e) {
