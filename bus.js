@@ -2,8 +2,8 @@ const BUS_KEY = "864e2d2a-dddc-441a-89b8-6435d86b81e4";
 const STOP_ID = "502174";
 const BUS_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json";
 
-const SHOW_START = 6;   // 6 AM UTC
-const SHOW_END = 17;    // 5 PM UTC
+const SHOW_START = 10;   // 6 AM UTC
+const SHOW_END = 21;    // 5 PM UTC
 
 // --- Format helper: show any Date in Eastern Time ---
 function formatET(date, withSeconds = false) {
