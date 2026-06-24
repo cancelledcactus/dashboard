@@ -3,11 +3,21 @@ const STOP_ID = "502174";
 const BUS_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json";
 
 const SHOW_START = 6;   // 6 AM
-const SHOW_END = 23;    // 1 PM (adjust if needed)
+const SHOW_END = 23;    // 11 PM (adjust if needed)
+const LOCAL_TZ = "America/New_York";
+
+// Current hour (0-23) in New York. Workers run in UTC, so new Date().getHours()
+// would return the UTC hour — read the hour through the local timezone instead.
+function nyHour() {
+  const s = new Intl.DateTimeFormat("en-US", {
+    timeZone: LOCAL_TZ, hour: "2-digit", hour12: false
+  }).format(new Date());
+  const h = parseInt(s, 10);
+  return h === 24 ? 0 : h;   // some runtimes report midnight as "24"
+}
 
 function shouldShowBus() {
-  const now = new Date();
-  const h = now.getHours();
+  const h = nyHour();
 
   if (SHOW_START < SHOW_END) {
     // Normal same-day range
@@ -19,9 +29,10 @@ function shouldShowBus() {
 }
 
 function scheduledTimeStr() {
-  const date = new Date();
-  date.setHours(SHOW_START, 0, 0);
-  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  // SHOW_START is a local hour-of-day; format it directly (no timezone math needed)
+  const h12 = SHOW_START % 12 === 0 ? 12 : SHOW_START % 12;
+  const ap = SHOW_START < 12 ? "AM" : "PM";
+  return `${h12}:00 ${ap}`;
 }
 
 export async function getBus() {
@@ -94,7 +105,8 @@ export async function getBus() {
       grouped[key] = grouped[key].slice(0, 3);
     }
 
-    const updated = new Date().toLocaleTimeString([], {
+    const updated = new Date().toLocaleTimeString("en-US", {
+      timeZone: LOCAL_TZ,
       hour: "numeric",
       minute: "2-digit",
       second: "2-digit"

@@ -53,6 +53,29 @@ async function handleRequest(request) {
   });
 }
 
+  // Server-accurate time for the dashboard clock (the Pi clock can drift)
+  if (pathname === "/api/time") {
+    const now = new Date();
+    const tz = "America/New_York";
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true
+    });
+    const body = {
+      epoch_ms: now.getTime(),     // UTC epoch milliseconds (client computes offset from this)
+      iso: now.toISOString(),
+      timezone: tz,
+      formatted: fmt.format(now)   // human-readable, for debugging
+    };
+    return new Response(JSON.stringify(body), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-store"
+      }
+    });
+  }
 
   // Serve static files
   if (pathname.startsWith("/static/")) {
