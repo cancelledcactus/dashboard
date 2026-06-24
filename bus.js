@@ -2,8 +2,8 @@ const BUS_KEY = "864e2d2a-dddc-441a-89b8-6435d86b81e4";
 const STOP_ID = "502174";
 const BUS_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json";
 
-const SHOW_START = 6;   // 6 AM
-const SHOW_END = 23;    // 11 PM (adjust if needed)
+const SHOW_START = 6;   // 6 AM (New York time)
+const SHOW_END = 20;    // 8 PM (New York time) — hidden outside 6 AM–8 PM
 const LOCAL_TZ = "America/New_York";
 
 // Current hour (0-23) in New York. Workers run in UTC, so new Date().getHours()
